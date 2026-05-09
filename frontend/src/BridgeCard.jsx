@@ -124,7 +124,7 @@ export default function BridgeCard() {
   const balanceSrc = useUSDCBalance(sourceChain, address)
 
   useEffect(() => {
-    fetch('http://localhost:3001/bridge/chains')
+    fetch('https://sparrow-dex-backend.onrender.com/bridge/chains')
       .then(r => r.json())
       .then(d => {
         if (d.success && d.chains.length) {
