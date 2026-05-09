@@ -5,17 +5,14 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills'
 export default defineConfig({
   plugins: [
     react(),
-    nodePolyfills({
-      include: ['buffer', 'crypto', 'stream', 'util'],
-      globals: { Buffer: true, global: true, process: true },
-    }),
+    nodePolyfills(),
   ],
-  define: {
-    global: 'globalThis',
-  },
-  build: {
-    commonjsOptions: {
-      transformMixedEsModules: true,
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
     },
   },
 })
