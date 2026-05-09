@@ -1,3 +1,8 @@
+// Disable SES lockdown before AppKit loads
+if (typeof window !== 'undefined') {
+  window.__LOCKDOWN_SKIP__ = true
+}
+
 import './fetchProxy.js'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
