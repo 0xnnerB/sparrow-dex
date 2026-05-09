@@ -1,0 +1,154 @@
+/* ─── BRIDGE — adicionar ao final do App.css ─────────────────────────────── */
+
+.bridge-badge {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(39, 117, 202, 0.15);
+  color: #2775CA;
+  border: 1px solid rgba(39, 117, 202, 0.3);
+}
+
+.chain-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2775CA;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* Recipient input */
+.bridge-recipient {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.bridge-recipient-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bridge-address-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #fff;
+  font-size: 13px;
+  font-family: monospace;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.bridge-address-input:focus {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.bridge-address-input[readonly] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bridge-my-wallet-btn {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bridge-my-wallet-btn.active {
+  background: rgba(39, 117, 202, 0.2);
+  border-color: rgba(39, 117, 202, 0.5);
+  color: #2775CA;
+}
+
+/* Step tracker CCTP */
+.bridge-steps {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  gap: 4px;
+}
+
+.bridge-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  opacity: 0.35;
+  transition: opacity 0.3s;
+}
+
+.bridge-step.success { opacity: 1; }
+.bridge-step.pending { opacity: 0.7; }
+.bridge-step.error   { opacity: 1; }
+
+.bridge-step-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.bridge-step.success .bridge-step-icon { color: #4ade80; }
+.bridge-step.error   .bridge-step-icon { color: #f87171; }
+.bridge-step.pending .bridge-step-icon {
+  color: #2775CA;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.bridge-step-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+.bridge-step-tx {
+  font-size: 9px;
+  color: #2775CA;
+  text-decoration: none;
+  font-family: monospace;
+}
+
+.bridge-sol-badge {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(153, 69, 255, 0.2);
+  color: #9945FF;
+  margin-left: 4px;
+}.bridge-max-btn {
+  background: transparent;
+  border: 1px solid rgba(39, 117, 202, 0.4);
+  color: #2775CA;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 6px;
+}
+
+.bridge-max-btn:hover {
+  background: rgba(39, 117, 202, 0.15);
+}
