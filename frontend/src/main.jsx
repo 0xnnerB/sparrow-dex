@@ -13,6 +13,7 @@ import {
 import { WagmiProvider } from 'wagmi'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 import { defineChain } from 'viem'
+import { sepolia, baseSepolia, arbitrumSepolia, optimismSepolia } from 'wagmi/chains'
 
 const arcTestnet = defineChain({
   id: 5042002,
@@ -30,7 +31,7 @@ const arcTestnet = defineChain({
 const config = getDefaultConfig({
   appName: 'Sparrow DEX',
   projectId: 'sparrowdex2024testnet',
-  chains: [arcTestnet],
+  chains: [arcTestnet, sepolia, baseSepolia, arbitrumSepolia, optimismSepolia],
   ssr: false,
 })
 

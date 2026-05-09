@@ -1,4 +1,6 @@
-require('dotenv').config();
+const path = require('path');
+const os = require('os');
+require('dotenv').config({ path: path.join(os.homedir(), 'Documents', 'sparrow-secrets', '.env') });
 const express = require('express');
 const cors = require('cors');
 const { AppKit } = require('@circle-fin/app-kit');

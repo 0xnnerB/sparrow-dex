@@ -4,6 +4,9 @@ import { useAccount, useReadContract, useConnectorClient, useSwitchChain } from 
 import { SwapKit } from '@circle-fin/swap-kit'
 import { createViemAdapterFromProvider } from '@circle-fin/adapter-viem-v2'
 import BridgeCard from './BridgeCard'
+import DisclaimerModal from './DisclaimerModal'
+import DocsPage from './DocsPage'
+import logoSw from './assets/logosw.png'
 import './App.css'
 
 const swapKit = new SwapKit()
@@ -251,6 +254,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <DisclaimerModal />
       <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
         <div className="nav-logo" onClick={() => setPage('home')}>
           <span className="nav-brand">SPARROW</span>
@@ -259,6 +263,10 @@ export default function App() {
           <button className={`nav-link ${page === 'trade' ? 'active' : ''}`} onClick={() => setPage('trade')}>Trade</button>
           <button className="nav-link disabled">Liquidity</button>
           <button className={`nav-link ${page === 'bridge' ? 'active' : ''}`} onClick={() => setPage('bridge')}>Bridge</button>
+          <button className="nav-link nav-link-bot">
+            <img src={logoSw} alt="sparrow" style={{height:'16px',width:'auto',marginRight:'6px',verticalAlign:'middle'}} />
+            SparrowBot
+          </button>
         </div>
         <div className="nav-right">
           {page === 'home' ? (
@@ -290,7 +298,7 @@ export default function App() {
               </p>
               <div className="hero-btns">
                 <button className="btn-primary" onClick={() => setPage('trade')}>◆ Launch App</button>
-                <button className="btn-secondary">○ Explore Pools</button>
+                <button className="btn-secondary" onClick={() => setPage('docs')}>○ Explore Docs</button>
               </div>
             </div>
           </div>
@@ -322,6 +330,8 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {page === 'docs' && <DocsPage setPage={setPage} />}
     </div>
   )
 }
