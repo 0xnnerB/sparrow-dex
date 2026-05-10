@@ -1,6 +1,6 @@
 const _fetch = window.fetch.bind(window)
 const CIRCLE_BASE = 'https://api.circle.com/v1/stablecoinKits'
-const PROXY_BASE = '/api/circle'
+const PROXY_BASE = 'https://sparrow-dex-backend.onrender.com/api/circle'
 
 window.fetch = (input, init = {}) => {
   // Extrai a URL independente do tipo de input (string, URL object ou Request)
