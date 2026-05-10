@@ -13,9 +13,15 @@ import '@rainbow-me/rainbowkit/styles.css'
 import {
   RainbowKitProvider,
   darkTheme,
+  connectorsForWallets,
 } from '@rainbow-me/rainbowkit'
+import {
+  metaMaskWallet,
+  injectedWallet,
+  coinbaseWallet,
+  rabbyWallet,
+} from '@rainbow-me/rainbowkit/wallets'
 import { createConfig, http, WagmiProvider } from 'wagmi'
-import { injected, metaMask } from 'wagmi/connectors'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 import { defineChain } from 'viem'
 import { sepolia, baseSepolia, arbitrumSepolia, optimismSepolia } from 'wagmi/chains'
@@ -33,9 +39,22 @@ const arcTestnet = defineChain({
   testnet: true,
 })
 
+const connectors = connectorsForWallets(
+  [
+    {
+      groupName: 'Available Wallets',
+      wallets: [metaMaskWallet, injectedWallet, coinbaseWallet, rabbyWallet],
+    },
+  ],
+  {
+    appName: 'Sparrow DEX',
+    projectId: 'sparrowdex2024testnet',
+  }
+)
+
 const config = createConfig({
   chains: [arcTestnet, sepolia, baseSepolia, arbitrumSepolia, optimismSepolia],
-  connectors: [metaMask(), injected()],
+  connectors,
   transports: {
     [arcTestnet.id]:      http('https://rpc.testnet.arc.network'),
     [sepolia.id]:         http(),
