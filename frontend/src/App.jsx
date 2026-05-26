@@ -6,6 +6,7 @@ import { createViemAdapterFromProvider } from '@circle-fin/adapter-viem-v2'
 import BridgeCard from './BridgeCard'
 import DisclaimerModal from './DisclaimerModal'
 import DocsPage from './DocsPage'
+import Fireflies from './Fireflies'
 import logoSw from './assets/logosw.png'
 import './App.css'
 
@@ -263,7 +264,7 @@ export default function App() {
           <button className={`nav-link ${page === 'trade' ? 'active' : ''}`} onClick={() => setPage('trade')}>Trade</button>
           <button className="nav-link disabled">Liquidity</button>
           <button className={`nav-link ${page === 'bridge' ? 'active' : ''}`} onClick={() => setPage('bridge')}>Bridge</button>
-          <button className="nav-link nav-link-bot">
+          <button className="nav-link nav-link-bot disabled">
             <img src={logoSw} alt="sparrow" style={{height:'16px',width:'auto',marginRight:'6px',verticalAlign:'middle'}} />
             SparrowBot
           </button>
@@ -308,6 +309,7 @@ export default function App() {
       {page === 'trade' && (
         <div className="trade-page">
           <div className="trade-bg" />
+          <Fireflies count={18} />
           <div className="trade-content">
             <div className="trade-header">
               <h2 className="trade-title">Trade</h2>
@@ -321,6 +323,7 @@ export default function App() {
       {page === 'bridge' && (
         <div className="trade-page">
           <div className="trade-bg" />
+          <Fireflies count={18} />
           <div className="trade-content">
             <div className="trade-header">
               <h2 className="trade-title">Bridge</h2>
