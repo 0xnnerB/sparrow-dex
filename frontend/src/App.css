@@ -613,7 +613,17 @@ body {
   .nav-links { position: static; transform: none; display: none; }
   .hero-content { padding: 0 28px; padding-top: 100px; }
   .hero-title { font-size: 4.5rem; }
-}.swap-error {
+}.swap-status {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  font-size: 0.83rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.swap-error {
   margin-top: 12px;
   padding: 12px;
   background: rgba(255, 50, 50, 0.15);

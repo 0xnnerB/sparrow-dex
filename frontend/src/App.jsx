@@ -1,36 +1,69 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { GlassConnectButton } from './GlassConnectButton'
-import { useAccount, useReadContract, useConnectorClient, useSwitchChain } from 'wagmi'
-import { SwapKit } from '@circle-fin/swap-kit'
-import { createViemAdapterFromProvider } from '@circle-fin/adapter-viem-v2'
+import { useAccount, useReadContract, usePublicClient, useWalletClient, useSwitchChain } from 'wagmi'
+import { parseUnits, formatUnits } from 'viem'
 import BridgeCard from './BridgeCard'
 import DisclaimerModal from './DisclaimerModal'
 import DocsPage from './DocsPage'
 import logoSw from './assets/logosw.png'
 import './App.css'
 
-const swapKit = new SwapKit()
+// ── Sparrow DEX on-chain contracts ──────────────────────────────────────────
+const SPARROW_ROUTER = '0x5648Ff497C976F61c49f090Bec013cC76675b8a1'
+const SPARROW_POOL   = '0xDfa1C023c5AaE0F4594d8b96B4858aaFEefe9e7f'
+const CHAIN_ID       = 5042002
 
 const TOKENS = [
-  { symbol: 'USDC', name: 'USD Coin', color: '#2775CA', address: '0x3600000000000000000000000000000000000000' },
+  { symbol: 'USDC', name: 'USD Coin',  color: '#2775CA', address: '0x3600000000000000000000000000000000000000' },
   { symbol: 'EURC', name: 'Euro Coin', color: '#0052B4', address: '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a' },
 ]
 
+// ── ABIs ─────────────────────────────────────────────────────────────────────
 const ERC20_ABI = [
-  {
-    name: 'balanceOf',
-    type: 'function',
-    stateMutability: 'view',
+  { name: 'balanceOf', type: 'function', stateMutability: 'view',
     inputs: [{ name: 'account', type: 'address' }],
-    outputs: [{ name: '', type: 'uint256' }],
-  },
+    outputs: [{ type: 'uint256' }] },
+  { name: 'allowance', type: 'function', stateMutability: 'view',
+    inputs: [{ name: 'owner', type: 'address' }, { name: 'spender', type: 'address' }],
+    outputs: [{ type: 'uint256' }] },
+  { name: 'approve', type: 'function', stateMutability: 'nonpayable',
+    inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }],
+    outputs: [{ type: 'bool' }] },
 ]
 
-const SWAP_RATES = {
-  'USDC-EURC': 0.92,
-  'EURC-USDC': 1.08,
+const ROUTER_ABI = [
+  { name: 'swapExactTokensForTokens', type: 'function', stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'amountIn',     type: 'uint256' },
+      { name: 'amountOutMin', type: 'uint256' },
+      { name: 'path',         type: 'address[]' },
+      { name: 'to',           type: 'address' },
+      { name: 'deadline',     type: 'uint256' },
+    ],
+    outputs: [{ name: 'amounts', type: 'uint256[]' }] },
+]
+
+const PAIR_ABI = [
+  { name: 'getReserves', type: 'function', stateMutability: 'view', inputs: [],
+    outputs: [
+      { name: 'reserve0',          type: 'uint112' },
+      { name: 'reserve1',          type: 'uint112' },
+      { name: 'blockTimestampLast', type: 'uint32'  },
+    ] },
+  { name: 'token0', type: 'function', stateMutability: 'view', inputs: [],
+    outputs: [{ type: 'address' }] },
+]
+
+// ── Uniswap V2 AMM formula (0.3% fee) ────────────────────────────────────────
+function computeAmountOut(amountIn, reserveIn, reserveOut) {
+  if (!amountIn || !reserveIn || !reserveOut || reserveIn === 0n) return 0n
+  const amountInWithFee = amountIn * 997n
+  const numerator       = amountInWithFee * reserveOut
+  const denominator     = reserveIn * 1000n + amountInWithFee
+  return numerator / denominator
 }
 
+// ── Token balance hook ────────────────────────────────────────────────────────
 function useTokenBalance(tokenAddress, userAddress) {
   const { data } = useReadContract({
     address: tokenAddress,
@@ -40,29 +73,69 @@ function useTokenBalance(tokenAddress, userAddress) {
     query: { enabled: !!userAddress },
   })
   if (!data) return '—'
-  return (Number(data) / 1e6).toFixed(2)
+  return Number(formatUnits(data, 6)).toFixed(2)
 }
 
+// ── SwapCard ──────────────────────────────────────────────────────────────────
 function SwapCard() {
   const { isConnected, address } = useAccount()
-  const { data: connectorClient } = useConnectorClient()
-  const { switchChainAsync } = useSwitchChain()
-  const [tokenIn, setTokenIn] = useState(TOKENS[0])
-  const [tokenOut, setTokenOut] = useState(TOKENS[1])
-  const [amountIn, setAmountIn] = useState('')
-  const [isSwapping, setIsSwapping] = useState(false)
-  const [txResult, setTxResult] = useState(null)
-  const [error, setError] = useState(null)
-  const [showDropdownIn, setShowDropdownIn] = useState(false)
+  const { switchChainAsync }     = useSwitchChain()
+  const publicClient             = usePublicClient({ chainId: CHAIN_ID })
+  const { data: walletClient }   = useWalletClient()
+
+  const [tokenIn,         setTokenIn]         = useState(TOKENS[0])
+  const [tokenOut,        setTokenOut]        = useState(TOKENS[1])
+  const [amountIn,        setAmountIn]        = useState('')
+  const [isSwapping,      setIsSwapping]      = useState(false)
+  const [txResult,        setTxResult]        = useState(null)
+  const [error,           setError]           = useState(null)
+  const [swapStatus,      setSwapStatus]      = useState('')
+  const [showDropdownIn,  setShowDropdownIn]  = useState(false)
   const [showDropdownOut, setShowDropdownOut] = useState(false)
 
-  const balanceIn  = useTokenBalance(tokenIn.address, address)
+  const balanceIn  = useTokenBalance(tokenIn.address,  address)
   const balanceOut = useTokenBalance(tokenOut.address, address)
 
-  const rateKey      = `${tokenIn.symbol}-${tokenOut.symbol}`
-  const rate         = SWAP_RATES[rateKey] || 1
-  const amountNum    = parseFloat(amountIn) || 0
-  const estimatedOut = amountNum > 0 ? (amountNum * rate).toFixed(2) : ''
+  // Live pool reserves
+  const { data: reserves, refetch: refetchReserves } = useReadContract({
+    address: SPARROW_POOL,
+    abi: PAIR_ABI,
+    functionName: 'getReserves',
+    chainId: CHAIN_ID,
+  })
+  const { data: token0 } = useReadContract({
+    address: SPARROW_POOL,
+    abi: PAIR_ABI,
+    functionName: 'token0',
+    chainId: CHAIN_ID,
+  })
+
+  // Real-time estimated output using AMM formula
+  const { estimatedOut, rate, priceImpact } = useMemo(() => {
+    const amountNum = parseFloat(amountIn)
+    if (!amountNum || !reserves || !token0) return { estimatedOut: '', rate: null, priceImpact: null }
+
+    const isTokenInToken0 = tokenIn.address.toLowerCase() === token0.toLowerCase()
+    const reserveIn  = isTokenInToken0 ? reserves[0] : reserves[1]
+    const reserveOut = isTokenInToken0 ? reserves[1] : reserves[0]
+
+    // Truncate to 6 decimals to avoid parseUnits overflow
+    const amountInBig = parseUnits(parseFloat(amountIn).toFixed(6), 6)
+    const outBig      = computeAmountOut(amountInBig, reserveIn, reserveOut)
+    const out         = Number(formatUnits(outBig, 6))
+    if (out <= 0) return { estimatedOut: '', rate: null, priceImpact: null }
+
+    // Price impact: compare to mid-price (reserveOut/reserveIn)
+    const midPrice   = Number(reserveOut) / Number(reserveIn)
+    const execPrice  = out / amountNum
+    const impact     = ((midPrice - execPrice) / midPrice) * 100
+
+    return {
+      estimatedOut: out.toFixed(6),
+      rate:         (out / amountNum).toFixed(4),
+      priceImpact:  impact.toFixed(2),
+    }
+  }, [amountIn, reserves, token0, tokenIn])
 
   const handleFlip = () => {
     setTokenIn(tokenOut)
@@ -73,42 +146,78 @@ function SwapCard() {
   }
 
   const handleSwap = async () => {
-    if (!isConnected || !amountIn || !connectorClient) return
+    if (!isConnected || !amountIn || !walletClient || !address || !publicClient || !estimatedOut) return
     setIsSwapping(true)
     setTxResult(null)
     setError(null)
+    setSwapStatus('')
 
     try {
-      // Garante que a carteira (MetaMask, Rabby, etc.) está na Arc Testnet
-      await switchChainAsync({ chainId: 5042002 })
+      await switchChainAsync({ chainId: CHAIN_ID })
 
-      // Usa o provider da carteira conectada via wagmi — funciona com qualquer wallet
-      const provider = connectorClient?.transport?.value?.provider ?? connectorClient?.transport
-      const adapter = await createViemAdapterFromProvider({ provider })
+      const amountInParsed = parseUnits(parseFloat(amountIn).toFixed(6), 6)
+      const amountOutMin   = parseUnits((parseFloat(estimatedOut) * 0.99).toFixed(6), 6)
+      const deadline       = BigInt(Math.floor(Date.now() / 1000) + 600)
 
-      const result = await swapKit.swap({
-        from: { adapter, chain: 'Arc_Testnet' },
-        tokenIn: tokenIn.symbol,
-        tokenOut: tokenOut.symbol,
-        amountIn,
-        config: {
-          // Dummy que passa a validação local do SDK (regex KIT_KEY:<id>:<secret>).
-          // A key real é injetada pelo backend proxy no Authorization header —
-          // o SDK envia o apiKey apenas via Bearer, nunca no body ou query params.
-          kitKey: 'KIT_KEY:proxy:injected',
-        },
+      // Step 1: approve if allowance is insufficient
+      const allowance = await publicClient.readContract({
+        address: tokenIn.address,
+        abi: ERC20_ABI,
+        functionName: 'allowance',
+        args: [address, SPARROW_ROUTER],
       })
 
-      if (result?.state === 'error') {
-        setError('Swap falhou. Verifique seu saldo e tente novamente.')
-        return
+      if (allowance < amountInParsed) {
+        setSwapStatus('Aguardando aprovação na carteira...')
+        const approveTxHash = await walletClient.writeContract({
+          address: tokenIn.address,
+          abi: ERC20_ABI,
+          functionName: 'approve',
+          args: [SPARROW_ROUTER, BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')],
+          account: address,
+        })
+        setSwapStatus('Confirmando aprovação...')
+        await publicClient.waitForTransactionReceipt({ hash: approveTxHash })
       }
 
-      setTxResult(result)
+      // Step 2: swap
+      setSwapStatus('Aguardando confirmação na carteira...')
+      const swapTxHash = await walletClient.writeContract({
+        address: SPARROW_ROUTER,
+        abi: ROUTER_ABI,
+        functionName: 'swapExactTokensForTokens',
+        args: [
+          amountInParsed,
+          amountOutMin,
+          [tokenIn.address, tokenOut.address],
+          address,
+          deadline,
+        ],
+        account: address,
+      })
+
+      setSwapStatus('Processando transação...')
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: swapTxHash })
+
+      setTxResult({
+        hash:         receipt.transactionHash,
+        amountIn,
+        tokenIn:      tokenIn.symbol,
+        tokenOut:     tokenOut.symbol,
+        estimatedOut,
+      })
+      refetchReserves()
+
     } catch (err) {
-      setError(err.message || 'Swap falhou')
+      const msg = err.shortMessage || err.message || ''
+      if (msg.toLowerCase().includes('user rejected') || err.code === 4001) {
+        setError('Transação cancelada.')
+      } else {
+        setError(msg || 'Swap falhou')
+      }
     } finally {
       setIsSwapping(false)
+      setSwapStatus('')
     }
   }
 
@@ -119,6 +228,7 @@ function SwapCard() {
         <button className="settings-btn">⚙</button>
       </div>
 
+      {/* YOU PAY */}
       <div className="token-box">
         <div className="token-box-top">
           <span className="token-box-label">You pay</span>
@@ -139,7 +249,8 @@ function SwapCard() {
             {showDropdownIn && (
               <div className="token-dropdown">
                 {TOKENS.filter(t => t.symbol !== tokenOut.symbol).map(t => (
-                  <div key={t.symbol} className="token-option" onClick={() => { setTokenIn(t); setShowDropdownIn(false) }}>
+                  <div key={t.symbol} className="token-option"
+                    onClick={() => { setTokenIn(t); setShowDropdownIn(false) }}>
                     <span className="token-dot" style={{ background: t.color }} />
                     {t.symbol}
                   </div>
@@ -154,6 +265,7 @@ function SwapCard() {
         <button className="flip-btn" onClick={handleFlip}>⇅</button>
       </div>
 
+      {/* YOU RECEIVE */}
       <div className="token-box">
         <div className="token-box-top">
           <span className="token-box-label">You receive</span>
@@ -174,7 +286,8 @@ function SwapCard() {
             {showDropdownOut && (
               <div className="token-dropdown">
                 {TOKENS.filter(t => t.symbol !== tokenIn.symbol).map(t => (
-                  <div key={t.symbol} className="token-option" onClick={() => { setTokenOut(t); setShowDropdownOut(false) }}>
+                  <div key={t.symbol} className="token-option"
+                    onClick={() => { setTokenOut(t); setShowDropdownOut(false) }}>
                     <span className="token-dot" style={{ background: t.color }} />
                     {t.symbol}
                   </div>
@@ -185,20 +298,28 @@ function SwapCard() {
         </div>
       </div>
 
-      {amountIn && !txResult && (
+      {/* Swap info rows */}
+      {amountIn && estimatedOut && !txResult && (
         <>
           <div className="swap-info">
             <span>Rate</span>
             <span>1 {tokenIn.symbol} ≈ {rate} {tokenOut.symbol}</span>
           </div>
           <div className="swap-info">
+            <span>Price impact</span>
+            <span style={{ color: parseFloat(priceImpact) > 5 ? '#ff6b6b' : 'inherit' }}>
+              {priceImpact}%
+            </span>
+          </div>
+          <div className="swap-info">
             <span>Route</span>
-            <span>{tokenIn.symbol} → {tokenOut.symbol} via Arc</span>
+            <span>{tokenIn.symbol} → {tokenOut.symbol} via Sparrow</span>
           </div>
         </>
       )}
 
-      {error && <div className="swap-error">⚠ {error}</div>}
+      {swapStatus && <div className="swap-status">⏳ {swapStatus}</div>}
+      {error     && <div className="swap-error">⚠ {error}</div>}
 
       {txResult && (
         <div className="swap-success">
@@ -209,13 +330,16 @@ function SwapCard() {
           </div>
           <div className="swap-success-row">
             <span>Recebido</span>
-            <span>≈ {estimatedOut} {txResult.tokenOut}</span>
+            <span>≈ {txResult.estimatedOut} {txResult.tokenOut}</span>
           </div>
-          {txResult.explorerUrl && (
-            <a href={txResult.explorerUrl} target="_blank" rel="noopener noreferrer" className="explorer-link">
-              Ver no Explorer →
-            </a>
-          )}
+          <a
+            href={`https://testnet.arcscan.app/tx/${txResult.hash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="explorer-link"
+          >
+            Ver no Explorer →
+          </a>
         </div>
       )}
 
@@ -227,9 +351,13 @@ function SwapCard() {
         <button
           className={`swap-btn ${isSwapping ? 'swapping' : ''}`}
           onClick={handleSwap}
-          disabled={!amountIn || isSwapping}
+          disabled={!amountIn || isSwapping || !estimatedOut}
         >
-          {isSwapping ? 'Processando swap...' : amountIn ? `Swap ${tokenIn.symbol} → ${tokenOut.symbol}` : 'Enter an amount'}
+          {isSwapping
+            ? (swapStatus || 'Processando...')
+            : amountIn
+              ? `Swap ${tokenIn.symbol} → ${tokenOut.symbol}`
+              : 'Enter an amount'}
         </button>
       )}
 
