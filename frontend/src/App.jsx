@@ -1,12 +1,11 @@
-import { useState, useEffect } from 'react'
-import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { useState } from 'react'
+import { GlassConnectButton } from './GlassConnectButton'
 import { useAccount, useReadContract, useConnectorClient, useSwitchChain } from 'wagmi'
 import { SwapKit } from '@circle-fin/swap-kit'
 import { createViemAdapterFromProvider } from '@circle-fin/adapter-viem-v2'
 import BridgeCard from './BridgeCard'
 import DisclaimerModal from './DisclaimerModal'
 import DocsPage from './DocsPage'
-import Fireflies from './Fireflies'
 import logoSw from './assets/logosw.png'
 import './App.css'
 
@@ -222,7 +221,7 @@ function SwapCard() {
 
       {!isConnected ? (
         <div className="connect-wrapper">
-          <ConnectButton label="Connect Wallet to Swap" />
+          <GlassConnectButton label="Connect Wallet to Swap" />
         </div>
       ) : (
         <button
@@ -245,18 +244,19 @@ function SwapCard() {
 
 export default function App() {
   const [page, setPage] = useState('home')
-  const [scrolled, setScrolled] = useState(false)
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40)
-    window.addEventListener('scroll', onScroll)
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
 
   return (
     <div className="app">
       <DisclaimerModal />
-      <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
+      <video
+        className="trade-bg"
+        src="https://res.cloudinary.com/dhhxouhta/video/upload/v1779835200/background_qxygbv.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+      />
+      <nav className="navbar">
         <div className="nav-logo" onClick={() => setPage('home')}>
           <span className="nav-brand">SPARROW</span>
         </div>
@@ -273,7 +273,7 @@ export default function App() {
           {page === 'home' ? (
             <button className="launch-btn" onClick={() => setPage('trade')}>Launch App</button>
           ) : (
-            <ConnectButton />
+            <GlassConnectButton />
           )}
         </div>
       </nav>
@@ -308,8 +308,6 @@ export default function App() {
 
       {page === 'trade' && (
         <div className="trade-page">
-          <div className="trade-bg" />
-          <Fireflies count={18} />
           <div className="trade-content">
             <div className="trade-header">
               <h2 className="trade-title">Trade</h2>
@@ -322,8 +320,6 @@ export default function App() {
 
       {page === 'bridge' && (
         <div className="trade-page">
-          <div className="trade-bg" />
-          <Fireflies count={18} />
           <div className="trade-content">
             <div className="trade-header">
               <h2 className="trade-title">Bridge</h2>

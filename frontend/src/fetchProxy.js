@@ -19,7 +19,6 @@ window.fetch = (input, init = {}) => {
   }
 
   const proxied = rawUrl.replace(CIRCLE_BASE, PROXY_BASE)
-  console.log('[fetchProxy]', rawUrl.split('?')[0], '→', proxied.split('?')[0])
 
   // Se o input era um Request object, reconstrói com a nova URL
   // para preservar method, headers e body do Request original

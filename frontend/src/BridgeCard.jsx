@@ -1,6 +1,6 @@
 import './bridge.css'
 import { useState, useEffect } from 'react'
-import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { GlassConnectButton } from './GlassConnectButton'
 import { useAccount, useReadContract, useConnectorClient, useSwitchChain } from 'wagmi'
 import { createViemAdapterFromProvider } from '@circle-fin/adapter-viem-v2'
 import { BridgeKit } from '@circle-fin/bridge-kit'
@@ -371,7 +371,7 @@ export default function BridgeCard() {
 
       {!isConnected ? (
         <div className="connect-wrapper">
-          <ConnectButton label="Connect Wallet to Bridge" />
+          <GlassConnectButton label="Connect Wallet to Bridge" />
         </div>
       ) : (
         <button
