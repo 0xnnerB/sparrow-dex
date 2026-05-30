@@ -3,6 +3,7 @@ import { GlassConnectButton } from './GlassConnectButton'
 import { useAccount, useReadContract, usePublicClient, useWalletClient, useSwitchChain } from 'wagmi'
 import { parseUnits, formatUnits } from 'viem'
 import BridgeCard from './BridgeCard'
+import LiquidityCard from './LiquidityCard'
 import DisclaimerModal from './DisclaimerModal'
 import DocsPage from './DocsPage'
 import logoSw from './assets/logosw.png'
@@ -390,7 +391,7 @@ export default function App() {
         </div>
         <div className="nav-links">
           <button className={`nav-link ${page === 'trade' ? 'active' : ''}`} onClick={() => setPage('trade')}>Trade</button>
-          <button className="nav-link disabled">Liquidity</button>
+          <button className={`nav-link ${page === 'liquidity' ? 'active' : ''}`} onClick={() => setPage('liquidity')}>Liquidity</button>
           <button className={`nav-link ${page === 'bridge' ? 'active' : ''}`} onClick={() => setPage('bridge')}>Bridge</button>
           <button className="nav-link nav-link-bot disabled">
             <img src={logoSw} alt="sparrow" style={{height:'16px',width:'auto',marginRight:'6px',verticalAlign:'middle'}} />
@@ -442,6 +443,18 @@ export default function App() {
               <p className="trade-subtitle">Swap tokens on Arc Testnet</p>
             </div>
             <SwapCard />
+          </div>
+        </div>
+      )}
+
+      {page === 'liquidity' && (
+        <div className="trade-page">
+          <div className="trade-content">
+            <div className="trade-header">
+              <h2 className="trade-title">Liquidity</h2>
+              <p className="trade-subtitle">Add or remove liquidity on Arc Testnet</p>
+            </div>
+            <LiquidityCard />
           </div>
         </div>
       )}
