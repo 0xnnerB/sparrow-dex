@@ -211,12 +211,12 @@ export default function BridgeCard() {
 
       if (result.state === 'error') {
         const failedStep = result.steps?.find(s => s.state === 'error')
-        setError(`Bridge falhou na etapa "${failedStep?.name}": ${failedStep?.error}`)
+        setError(`Bridge failed at step "${failedStep?.name}": ${failedStep?.error}`)
       } else {
         setTxResult(result)
       }
     } catch (err) {
-      setError(err.message || 'Erro ao executar o bridge')
+      setError(err.message || 'Error executing bridge')
       setSteps([])
     } finally {
       setIsBridging(false)
@@ -327,7 +327,7 @@ export default function BridgeCard() {
         <input
           className="bridge-address-input"
           type="text"
-          placeholder={dstIsSol ? 'Solana address (base58)' : '0x... endereço de destino'}
+          placeholder={dstIsSol ? 'Solana address (base58)' : '0x... destination address'}
           value={recipient}
           onChange={e => { setRecipient(e.target.value); setUseMyWallet(false) }}
           readOnly={useMyWallet && isConnected}
@@ -353,17 +353,17 @@ export default function BridgeCard() {
 
       {txResult && txResult.state === 'success' && (
         <div className="swap-success">
-          <div className="swap-success-title">✓ Bridge concluído!</div>
+          <div className="swap-success-title">✓ Bridge complete!</div>
           <div className="swap-success-row">
-            <span>Enviado</span>
+            <span>Sent</span>
             <span>{txResult.amount} USDC · {srcChain?.label}</span>
           </div>
           <div className="swap-success-row">
-            <span>Recebido</span>
+            <span>Received</span>
             <span>{willReceive} USDC · {dstChain?.label}</span>
           </div>
           <div className="swap-success-row">
-            <span>Destino</span>
+            <span>Destination</span>
             <span>{recipient.slice(0, 8)}…{recipient.slice(-6)}</span>
           </div>
         </div>
@@ -380,16 +380,16 @@ export default function BridgeCard() {
           disabled={!canBridge || isBridging}
         >
           {isBridging
-            ? 'Processando bridge...'
+            ? 'Processing bridge...'
             : canBridge
               ? `Bridge ${amount} USDC · ${srcChain?.label} → ${dstChain?.label}`
-              : 'Preencha os campos acima'}
+              : 'Fill in the fields above'}
         </button>
       )}
 
       {isConnected && (
         <div className="wallet-info">
-          Conectado: {address?.slice(0, 6)}...{address?.slice(-4)}
+          Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
         </div>
       )}
     </div>

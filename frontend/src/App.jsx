@@ -169,7 +169,7 @@ function SwapCard() {
       })
 
       if (allowance < amountInParsed) {
-        setSwapStatus('Aguardando aprovação na carteira...')
+        setSwapStatus('Waiting for wallet approval...')
         const approveTxHash = await walletClient.writeContract({
           address: tokenIn.address,
           abi: ERC20_ABI,
@@ -177,12 +177,12 @@ function SwapCard() {
           args: [SPARROW_ROUTER, BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')],
           account: address,
         })
-        setSwapStatus('Confirmando aprovação...')
+        setSwapStatus('Confirming approval...')
         await publicClient.waitForTransactionReceipt({ hash: approveTxHash })
       }
 
       // Step 2: swap
-      setSwapStatus('Aguardando confirmação na carteira...')
+      setSwapStatus('Waiting for wallet confirmation...')
       const swapTxHash = await walletClient.writeContract({
         address: SPARROW_ROUTER,
         abi: ROUTER_ABI,
@@ -197,7 +197,7 @@ function SwapCard() {
         account: address,
       })
 
-      setSwapStatus('Processando transação...')
+      setSwapStatus('Processing transaction...')
       const receipt = await publicClient.waitForTransactionReceipt({ hash: swapTxHash })
 
       setTxResult({
@@ -212,9 +212,9 @@ function SwapCard() {
     } catch (err) {
       const msg = err.shortMessage || err.message || ''
       if (msg.toLowerCase().includes('user rejected') || err.code === 4001) {
-        setError('Transação cancelada.')
+        setError('Transaction cancelled.')
       } else {
-        setError(msg || 'Swap falhou')
+        setError(msg || 'Swap failed')
       }
     } finally {
       setIsSwapping(false)
@@ -324,13 +324,13 @@ function SwapCard() {
 
       {txResult && (
         <div className="swap-success">
-          <div className="swap-success-title">✓ Swap concluído!</div>
+          <div className="swap-success-title">✓ Swap complete!</div>
           <div className="swap-success-row">
-            <span>Enviado</span>
+            <span>Sent</span>
             <span>{txResult.amountIn} {txResult.tokenIn}</span>
           </div>
           <div className="swap-success-row">
-            <span>Recebido</span>
+            <span>Received</span>
             <span>≈ {txResult.estimatedOut} {txResult.tokenOut}</span>
           </div>
           <a
@@ -339,7 +339,7 @@ function SwapCard() {
             rel="noopener noreferrer"
             className="explorer-link"
           >
-            Ver no Explorer →
+            View on Explorer →
           </a>
         </div>
       )}
@@ -355,7 +355,7 @@ function SwapCard() {
           disabled={!amountIn || isSwapping || !estimatedOut}
         >
           {isSwapping
-            ? (swapStatus || 'Processando...')
+            ? (swapStatus || 'Processing...')
             : amountIn
               ? `Swap ${tokenIn.symbol} → ${tokenOut.symbol}`
               : 'Enter an amount'}
@@ -364,7 +364,7 @@ function SwapCard() {
 
       {isConnected && (
         <div className="wallet-info">
-          Conectado: {address?.slice(0, 6)}...{address?.slice(-4)}
+          Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
         </div>
       )}
     </div>

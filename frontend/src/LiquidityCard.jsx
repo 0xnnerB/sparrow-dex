@@ -139,7 +139,7 @@ export default function LiquidityCard() {
     if (!saved.snapshotLPBalance) return empty
     return {
       hasDeposit:  true,
-      since:       saved.timestamp ? new Date(saved.timestamp).toLocaleString('pt-BR') : null,
+      since:       saved.timestamp ? new Date(saved.timestamp).toLocaleString('en-US') : null,
       snapshotReserveUSDC: parseFloat(saved.snapshotReserveUSDC || 0),
       snapshotReserveEURC: parseFloat(saved.snapshotReserveEURC || 0),
       snapshotTotalSupply: parseFloat(saved.snapshotTotalSupply || 0),
@@ -220,29 +220,29 @@ export default function LiquidityCard() {
       // Approve USDC if needed
       const usdcAllowance = await publicClient.readContract({ address: USDC.address, abi: ERC20_ABI, functionName: 'allowance', args: [address, SPARROW_ROUTER] })
       if (usdcAllowance < usdcAmount) {
-        setAddStatus('Aprovando USDC...')
+        setAddStatus('Approving USDC...')
         const tx = await walletClient.writeContract({ address: USDC.address, abi: ERC20_ABI, functionName: 'approve', args: [SPARROW_ROUTER, MAX_UINT256], account: address })
-        setAddStatus('Confirmando aprovação USDC...')
+        setAddStatus('Confirming USDC approval...')
         await publicClient.waitForTransactionReceipt({ hash: tx })
       }
 
       // Approve EURC if needed
       const eurcAllowance = await publicClient.readContract({ address: EURC.address, abi: ERC20_ABI, functionName: 'allowance', args: [address, SPARROW_ROUTER] })
       if (eurcAllowance < eurcAmount) {
-        setAddStatus('Aprovando EURC...')
+        setAddStatus('Approving EURC...')
         const tx = await walletClient.writeContract({ address: EURC.address, abi: ERC20_ABI, functionName: 'approve', args: [SPARROW_ROUTER, MAX_UINT256], account: address })
-        setAddStatus('Confirmando aprovação EURC...')
+        setAddStatus('Confirming EURC approval...')
         await publicClient.waitForTransactionReceipt({ hash: tx })
       }
 
       // addLiquidity
-      setAddStatus('Adicionando liquidez...')
+      setAddStatus('Adding liquidity...')
       const txHash  = await walletClient.writeContract({
         address: SPARROW_ROUTER, abi: ROUTER_LIQUIDITY_ABI, functionName: 'addLiquidity',
         args: [USDC.address, EURC.address, usdcAmount, eurcAmount, usdcMin, eurcMin, address, deadline],
         account: address,
       })
-      setAddStatus('Processando transação...')
+      setAddStatus('Processing transaction...')
       const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash })
 
       // Decode real deposit amounts from Mint event (fallback to inputs)
@@ -276,7 +276,7 @@ export default function LiquidityCard() {
       refetchUsdcBal(); refetchEurcBal()
     } catch (err) {
       const msg = err.shortMessage || err.message || ''
-      setAddError(msg.toLowerCase().includes('user rejected') || err.code === 4001 ? 'Transação cancelada.' : msg || 'Falha ao adicionar liquidez')
+      setAddError(msg.toLowerCase().includes('user rejected') || err.code === 4001 ? 'Transaction cancelled.' : msg || 'Failed to add liquidity')
     } finally {
       setAddStatus('')
     }
@@ -315,20 +315,20 @@ export default function LiquidityCard() {
       // Approve LP token if needed
       const lpAllowance = await publicClient.readContract({ address: SPARROW_POOL, abi: PAIR_ABI, functionName: 'allowance', args: [address, SPARROW_ROUTER] })
       if (lpAllowance < lpToRemove) {
-        setRemoveStatus('Aprovando LP token...')
+        setRemoveStatus('Approving LP token...')
         const tx = await walletClient.writeContract({ address: SPARROW_POOL, abi: PAIR_ABI, functionName: 'approve', args: [SPARROW_ROUTER, MAX_UINT256], account: address })
-        setRemoveStatus('Confirmando aprovação LP...')
+        setRemoveStatus('Confirming LP approval...')
         await publicClient.waitForTransactionReceipt({ hash: tx })
       }
 
       // removeLiquidity
-      setRemoveStatus('Removendo liquidez...')
+      setRemoveStatus('Removing liquidity...')
       const txHash  = await walletClient.writeContract({
         address: SPARROW_ROUTER, abi: ROUTER_LIQUIDITY_ABI, functionName: 'removeLiquidity',
         args: [USDC.address, EURC.address, lpToRemove, usdcMin, eurcMin, address, deadline],
         account: address,
       })
-      setRemoveStatus('Processando transação...')
+      setRemoveStatus('Processing transaction...')
       const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash })
 
       // Fetch updated pool state in parallel
@@ -358,7 +358,7 @@ export default function LiquidityCard() {
       refetchUsdcBal(); refetchEurcBal()
     } catch (err) {
       const msg = err.shortMessage || err.message || ''
-      setRemoveError(msg.toLowerCase().includes('user rejected') || err.code === 4001 ? 'Transação cancelada.' : msg || 'Falha ao remover liquidez')
+      setRemoveError(msg.toLowerCase().includes('user rejected') || err.code === 4001 ? 'Transaction cancelled.' : msg || 'Failed to remove liquidity')
     } finally {
       setRemoveStatus('')
     }
@@ -416,7 +416,7 @@ export default function LiquidityCard() {
 
           <div className="token-box">
             <div className="token-box-top">
-              <span className="token-box-label">EURC (proporcional às reservas)</span>
+              <span className="token-box-label">EURC (proportional to reserves)</span>
               <span className="token-balance">Balance: {eurcBal ? Number(formatUnits(eurcBal, 6)).toFixed(2) : '—'}</span>
             </div>
             <div className="token-box-row">
@@ -427,7 +427,7 @@ export default function LiquidityCard() {
 
           {eurcNeeded && estimatedLP && (
             <div className="swap-info">
-              <span>LP tokens estimados</span>
+              <span>Estimated LP tokens</span>
               <span>{estimatedLP}</span>
             </div>
           )}
@@ -436,11 +436,11 @@ export default function LiquidityCard() {
           {addError    && <div className="swap-error">⚠ {addError}</div>}
           {addTxResult && (
             <div className="swap-success">
-              <div className="swap-success-title">✓ Liquidez adicionada!</div>
-              <div className="swap-success-row"><span>USDC fornecido</span><span>{addTxResult.usdcAmount}</span></div>
-              <div className="swap-success-row"><span>EURC fornecido</span><span>{addTxResult.eurcAmount}</span></div>
+              <div className="swap-success-title">✓ Liquidity added!</div>
+              <div className="swap-success-row"><span>USDC deposited</span><span>{addTxResult.usdcAmount}</span></div>
+              <div className="swap-success-row"><span>EURC deposited</span><span>{addTxResult.eurcAmount}</span></div>
               <a href={`https://testnet.arcscan.app/tx/${addTxResult.hash}`} target="_blank" rel="noopener noreferrer" className="explorer-link">
-                Ver no ArcScan →
+                View on ArcScan →
               </a>
             </div>
           )}
@@ -462,11 +462,6 @@ export default function LiquidityCard() {
       {/* ── REMOVE ── */}
       {activeTab === 'remove' && (
         <div className="liq-section">
-          <div className="liq-lp-balance">
-            <span>Seu saldo LP</span>
-            <span>{lpBalance ? Number(formatUnits(lpBalance, 18)).toFixed(12) : '—'}</span>
-          </div>
-
           {lpBalance && lpBalance > 0n ? (
             <>
               <div className="liq-percent-row">
@@ -489,18 +484,18 @@ export default function LiquidityCard() {
               />
               <div className="liq-percent-label">{removePercent}%</div>
 
-              {usdcToReceive && <div className="swap-info"><span>USDC a receber</span><span>≈ {usdcToReceive}</span></div>}
-              {eurcToReceive && <div className="swap-info"><span>EURC a receber</span><span>≈ {eurcToReceive}</span></div>}
+              {usdcToReceive && <div className="swap-info"><span>USDC to receive</span><span>≈ {usdcToReceive}</span></div>}
+              {eurcToReceive && <div className="swap-info"><span>EURC to receive</span><span>≈ {eurcToReceive}</span></div>}
 
               {removeStatus   && <div className="swap-status">⏳ {removeStatus}</div>}
               {removeError    && <div className="swap-error">⚠ {removeError}</div>}
               {removeTxResult && (
                 <div className="swap-success">
-                  <div className="swap-success-title">✓ Liquidez removida!</div>
-                  <div className="swap-success-row"><span>USDC recebido</span><span>≈ {removeTxResult.usdcAmount}</span></div>
-                  <div className="swap-success-row"><span>EURC recebido</span><span>≈ {removeTxResult.eurcAmount}</span></div>
+                  <div className="swap-success-title">✓ Liquidity removed!</div>
+                  <div className="swap-success-row"><span>USDC received</span><span>≈ {removeTxResult.usdcAmount}</span></div>
+                  <div className="swap-success-row"><span>EURC received</span><span>≈ {removeTxResult.eurcAmount}</span></div>
                   <a href={`https://testnet.arcscan.app/tx/${removeTxResult.hash}`} target="_blank" rel="noopener noreferrer" className="explorer-link">
-                    Ver no ArcScan →
+                    View on ArcScan →
                   </a>
                 </div>
               )}
@@ -519,8 +514,8 @@ export default function LiquidityCard() {
             </>
           ) : (
             <div className="liq-empty">
-              <p>Você não tem liquidez para remover.</p>
-              <button className="liq-goto-add" onClick={() => setActiveTab('add')}>Adicionar liquidez</button>
+              <p>You have no liquidity to remove.</p>
+              <button className="liq-goto-add" onClick={() => setActiveTab('add')}>Add Liquidity</button>
             </div>
           )}
         </div>
@@ -541,14 +536,14 @@ export default function LiquidityCard() {
                     <span className="token-dot" style={{ background: EURC.color }} />
                     USDC / EURC
                   </span>
-                  <span className="liq-share-badge">{poolShare}% do pool</span>
+                  <span className="liq-share-badge">{poolShare}% of pool</span>
                 </div>
                 <div className="liq-position-rows">
                   <div className="swap-info"><span>Equiv. USDC</span><span>{myUSDC}</span></div>
                   <div className="swap-info"><span>Equiv. EURC</span><span>{myEURC}</span></div>
                 </div>
                 <button className="liq-remove-btn" onClick={() => setActiveTab('remove')}>
-                  Remover liquidez →
+                  Remove Liquidity →
                 </button>
               </div>
 
@@ -556,21 +551,21 @@ export default function LiquidityCard() {
               {depositData.hasDeposit ? (
                 <div className="liq-fees-card">
                   <div className="liq-fees-header">
-                    <span>Taxas Acumuladas (0.3%)</span>
+                    <span>Accumulated Fees (0.3%)</span>
                     {depositData.since && (
-                      <span className="liq-fees-since">Desde {depositData.since}</span>
+                      <span className="liq-fees-since">Since {depositData.since}</span>
                     )}
                   </div>
                   {noFees ? (
-                    <div className="liq-fees-empty">Nenhuma taxa acumulada ainda</div>
+                    <div className="liq-fees-empty">No fees accumulated yet</div>
                   ) : (
                     <>
                       <div className="liq-fee-row">
-                        <span>Você (USDC)</span>
+                        <span>You (USDC)</span>
                         <span className="liq-fee-value">+{feesUSDC}</span>
                       </div>
                       <div className="liq-fee-row">
-                        <span>Você (EURC)</span>
+                        <span>You (EURC)</span>
                         <span className="liq-fee-value">+{feesEURC}</span>
                       </div>
                     </>
@@ -579,7 +574,7 @@ export default function LiquidityCard() {
               ) : (
                 <div className="liq-fees-card liq-fees-card--dim">
                   <div className="liq-fees-header">
-                    <span>Taxas Acumuladas (0.3%)</span>
+                    <span>Accumulated Fees (0.3%)</span>
                   </div>
                   <div className="liq-fee-row">
                     <span>USDC</span>
@@ -589,14 +584,14 @@ export default function LiquidityCard() {
                     <span>EURC</span>
                     <span className="liq-fee-value liq-fee-value--dash">—</span>
                   </div>
-                  <div className="liq-fees-hint">Adicione liquidez para começar a rastrear suas taxas</div>
+                  <div className="liq-fees-hint">Add liquidity to start tracking your fees</div>
                 </div>
               )}
             </>
           ) : (
             <div className="liq-empty">
-              <p>Você não tem liquidez neste pool.</p>
-              <button className="liq-goto-add" onClick={() => setActiveTab('add')}>Adicionar liquidez</button>
+              <p>You have no liquidity in this pool.</p>
+              <button className="liq-goto-add" onClick={() => setActiveTab('add')}>Add Liquidity</button>
             </div>
           )}
         </div>
@@ -604,7 +599,7 @@ export default function LiquidityCard() {
 
       {isConnected && (
         <div className="wallet-info">
-          Conectado: {address?.slice(0, 6)}...{address?.slice(-4)}
+          Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
         </div>
       )}
     </div>
