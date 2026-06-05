@@ -411,7 +411,7 @@ export default function App() {
         <div className="hero">
           <video
             className="hero-video"
-            src="https://res.cloudinary.com/dhhxouhta/video/upload/v1777936640/magnific_d-um-leve-movimento-de-flutuao-a-logo-do-pssaro-en_kling_1080p_16-9_24fps_90642_cev8s4.mp4"
+            src="https://res.cloudinary.com/dhhxouhta/video/upload/v1780621478/sparrow--_dmno86.mp4"
             autoPlay
             loop
             muted
